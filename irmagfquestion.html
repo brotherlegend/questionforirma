@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Question 👀</title>
+  <style>
+    :root{
+      --bg1:#ffe6ee;
+      --bg2:#fff7fb;
+      --text:#1f1f1f;
+      --yes:#22c55e;
+      --no:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: radial-gradient(1200px 600px at 50% 20%, var(--bg2), var(--bg1));
+      overflow:hidden;
+    }
+    .card{
+      width:min(720px, 92vw);
+      background: rgba(255,255,255,.75);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 24px;
+      padding: 28px 22px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.12);
+      text-align:center;
+      position:relative;
+    }
+    h1{
+      margin: 8px 0 10px;
+      font-size: clamp(26px, 3.6vw, 44px);
+      letter-spacing: -0.02em;
+    }
+    p{
+      margin: 0 0 18px;
+      font-size: 15px;
+      opacity: .8;
+      min-height: 22px;
+    }
+    .gif{
+      width: min(360px, 70vw);
+      height: auto;
+      border-radius: 18px;
+      margin: 8px auto 18px;
+      display:block;
+      box-shadow: 0 10px 30px rgba(0,0,0,.10);
+    }
+
+    .buttons{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 14px;
+      margin-top: 6px;
+      position:relative;
+      height: 90px; /* gives room for runaway button */
+    }
+    button{
+      border:none;
+      padding: 14px 22px;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(0,0,0,.12);
+      transition: transform .12s ease, filter .12s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{ transform: scale(.98); }
+    #yes{
+      background: var(--yes);
+      color:white;
+      transform: scale(1);
+    }
+    #no{
+      background: var(--no);
+      color:white;
+      position:absolute; /* so we can move it around inside .buttons */
+      left: 55%;
+      top: 14px;
+      transform: translateX(-50%);
+    }
+
+    .hearts{
+      pointer-events:none;
+      position:absolute;
+      inset:-40px;
+      overflow:hidden;
+    }
+    .heart{
+      position:absolute;
+      font-size: 18px;
+      opacity: .0;
+      animation: floatUp 2.6s ease-in forwards;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.12));
+    }
+    @keyframes floatUp{
+      0%{ transform: translateY(0) scale(.9); opacity: 0;}
+      15%{opacity: .95;}
+      100%{ transform: translateY(-260px) scale(1.35); opacity: 0;}
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.35);
+      padding: 18px;
+    }
+    .modal.show{ display:flex; }
+    .modal-content{
+      width:min(560px, 92vw);
+      background:white;
+      border-radius: 22px;
+      padding: 22px;
+      text-align:center;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+    }
+    .modal-content h2{ margin: 4px 0 10px; font-size: 28px; }
+    .modal-content p{ margin: 0 0 14px; opacity: .85; }
+    .small{
+      font-size: 12px;
+      opacity: .55;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="card" id="card">
+    <h1>Irma, will you be my girlfriend? 💘</h1>
+    <p id="caption">Be honest… but choose wisely 😭</p>
+
+    <!-- You can swap this GIF to anything you want -->
+    <img class="gif" id="gif" alt="cute gif"
+      src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd3N2cGZ5b2F4dThqemx2bG4yZ2JmY2c0cDg4a2M0d3JrNGZ6cCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3oriO0OEd9QIDdllqo/giphy.gif">
+
+    <div class="buttons" id="arena">
+      <button id="yes">Yes 😍</button>
+      <button id="no">No 🙄</button>
+    </div>
+
+    <div class="small">Tip: edit the text/GIF in the HTML to personalize it.</div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2>LETS GOOO 🥳💞</h2>
+      <p>Okay so it’s official. Don’t act brand new 😌</p>
+      <button id="close" style="background:#111;color:#fff;">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const yes = document.getElementById("yes");
+    const no = document.getElementById("no");
+    const caption = document.getElementById("caption");
+    const arena = document.getElementById("arena");
+    const modal = document.getElementById("modal");
+    const close = document.getElementById("close");
+    const hearts = document.getElementById("hearts");
+
+    let noCount = 0;
+    let yesScale = 1;
+
+    const noLines = [
+      "You sure? 😭",
+      "C’mon… be serious 😐",
+      "That button feels wrong, try again 😤",
+      "I’m not accepting that 😭",
+      "You’re misclicking on purpose 😑",
+      "This is getting personal… 😔",
+      "Last chance… 😳",
+      "Okay now you’re just playing 😭"
+    ];
+
+    function spawnHearts(amount = 10){
+      const rect = document.getElementById("card").getBoundingClientRect();
+      for(let i=0;i<amount;i++){
+        const h = document.createElement("div");
+        h.className = "heart";
+        h.textContent = ["💖","💘","💝","💕","❤️"][Math.floor(Math.random()*5)];
+        const x = rect.left + rect.width/2 + (Math.random()*220 - 110);
+        const y = rect.top + rect.height/2 + (Math.random()*120 - 10);
+        h.style.left = x + "px";
+        h.style.top = y + "px";
+        h.style.animationDuration = (2.2 + Math.random()*1.2) + "s";
+        hearts.appendChild(h);
+        requestAnimationFrame(() => { h.style.opacity = 1; });
+        setTimeout(()=> h.remove(), 3200);
+      }
+    }
+
+    function moveNoButton(){
+      const a = arena.getBoundingClientRect();
+      const b = no.getBoundingClientRect();
+      const padding = 8;
+
+      const maxX = a.width - b.width - padding;
+      const maxY = a.height - b.height - padding;
+
+      // random positions within arena
+      const x = Math.max(padding, Math.min(maxX, Math.random() * maxX));
+      const y = Math.max(padding, Math.min(maxY, Math.random() * maxY));
+
+      no.style.left = x + "px";
+      no.style.top = y + "px";
+      no.style.transform = "none";
+    }
+
+    function growYes(){
+      yesScale = Math.min(4.2, yesScale + 0.18);
+      yes.style.transform = `scale(${yesScale})`;
+    }
+
+    // Make "No" run away on hover (desktop) and on tap (mobile)
+    no.addEventListener("mouseenter", () => {
+      noCount++;
+      caption.textContent = noLines[Math.min(noLines.length - 1, Math.floor(noCount/2))];
+      growYes();
+      moveNoButton();
+    });
+
+    no.addEventListener("click", (e) => {
+      e.preventDefault();
+      noCount++;
+      caption.textContent = noLines[Math.min(noLines.length - 1, Math.floor(noCount/2))];
+      growYes();
+      moveNoButton();
+    });
+
+    yes.addEventListener("click", () => {
+      spawnHearts(18);
+      modal.classList.add("show");
+    });
+
+    close.addEventListener("click", () => modal.classList.remove("show"));
+    modal.addEventListener("click", (e) => {
+      if(e.target === modal) modal.classList.remove("show");
+    });
+
+    // Start with a little motion so it feels alive
+    setTimeout(() => moveNoButton(), 150);
+  </script>
+</body>
+</html>
